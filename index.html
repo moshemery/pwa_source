@@ -740,8 +740,14 @@
 
     <div class="onboard-section">
       <div class="os-title">➕ צור קבוצה חדשה</div>
-      <div class="os-desc">יוצר קוד ייחודי לשיתוף עם הורי הקבוצה. כל ההורים יראו את אותם הנתונים בזמן אמת.</div>
-      <button class="btn btn-save" id="btn-create-group" style="width:100%">
+      <div class="os-desc">הכנס את שמות הילדים/משפחות (4 שמות), ולחץ "צור קבוצה".</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <input type="text" class="member-input date-input" placeholder="שם ילד 1" maxlength="20" style="font-size:15px;text-align:center;" />
+        <input type="text" class="member-input date-input" placeholder="שם ילד 2" maxlength="20" style="font-size:15px;text-align:center;" />
+        <input type="text" class="member-input date-input" placeholder="שם ילד 3" maxlength="20" style="font-size:15px;text-align:center;" />
+        <input type="text" class="member-input date-input" placeholder="שם ילד 4" maxlength="20" style="font-size:15px;text-align:center;" />
+      </div>
+      <button class="btn btn-save" id="btn-create-group" style="width:100%" disabled>
         <span>⚽</span><span>צור קבוצה חדשה</span>
       </button>
     </div>
@@ -986,42 +992,23 @@
 
 <script>
 // =====================================================
-// FIREBASE CONFIG — Replace with your own project config
-// Setup: https://console.firebase.google.com/
-//   1. Create project → Add web app → copy config below
-//   2. Firestore Database → Create database (test mode)
-//   3. Firestore Rules → paste the rules from the README
+// FIREBASE CONFIG — paste your project's config here
+// (from Firebase console → Project Settings → Your apps)
 // =====================================================
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const FIREBASE_CONFIG= {
+var FIREBASE_CONFIG = {
   apiKey: "AIzaSyCFv5tfyjG82UxoKvkNllqovRwtcnhXL04",
   authDomain: "dirve-app-afc22.firebaseapp.com",
   projectId: "dirve-app-afc22",
   storageBucket: "dirve-app-afc22.firebasestorage.app",
   messagingSenderId: "373274542499",
-  appId: "1:373274542499:web:0fc0876cf587ab537d5a16",
-  measurementId: "G-05E8E5JJ79"
+  appId: "1:373274542499:web:0fc0876cf587ab537d5a16"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-
-
 // =====================================================
 </script>
 
 <script>
 (() => {
-  const FAMILIES = ['אורי', 'איתן', 'נטע', 'דוראל'];
+  let FAMILIES = ['ילד 1', 'ילד 2', 'ילד 3', 'ילד 4']; // overwritten by group config
   const DEFAULT_DAYS = ['שני', 'חמישי'];
   const ALL_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי']; // no Saturday
   const DAY_INDEX = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5 };
@@ -1078,7 +1065,7 @@ const analytics = getAnalytics(app);
     if (modalEl)  modalEl.textContent  = id || '------';
   }
 
-  async function createGroup() {
+  async function createGroup(members) {
     if (!db) return generateGroupId(); // offline fallback
     let newId;
     for (let i = 0; i < 10; i++) {
@@ -1088,6 +1075,7 @@ const analytics = getAnalytics(app);
     }
     await db.collection('groups').doc(newId).set({
       created: firebase.firestore.FieldValue.serverTimestamp(),
+      members: members,
       history: [],
       weekState: null,
     });
@@ -1100,6 +1088,25 @@ const analytics = getAnalytics(app);
       const doc = await db.collection('groups').doc(id.toUpperCase()).get();
       return doc.exists;
     } catch (e) { return false; }
+  }
+
+  async function loadGroupMembers(id) {
+    if (!db) return null;
+    try {
+      const doc = await db.collection('groups').doc(id.toUpperCase()).get();
+      if (doc.exists && doc.data().members && doc.data().members.length) {
+        return doc.data().members;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function applyMembers(members) {
+    if (!members || !members.length) return;
+    FAMILIES = members.slice(0, 4);
+    // Reset form slot keys to match updated FAMILIES
+    ensureSlotKeys(mainForm);
+    ensureSlotKeys(addForm);
   }
 
   function storeGroupId(id) {
@@ -1122,6 +1129,9 @@ const analytics = getAnalytics(app);
         if (!doc.exists) { setSyncStatus('offline'); return; }
         setSyncStatus('online');
         const data = doc.data();
+
+        // Apply member names if present
+        if (data.members && data.members.length) applyMembers(data.members);
 
         // Update history (only if different from local to avoid loops)
         const remote = data.history || [];
@@ -2260,12 +2270,26 @@ const analytics = getAnalytics(app);
   });
 
   // ===== Onboarding event listeners =====
+
+  // Enable create-group button only when all 4 names are filled
+  function getEnteredMembers() {
+    return Array.from($$('.member-input')).map(el => el.value.trim()).filter(Boolean);
+  }
+  $$('.member-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      $('#btn-create-group').disabled = getEnteredMembers().length < 4;
+    });
+  });
+
   $('#btn-create-group').addEventListener('click', async () => {
+    const members = getEnteredMembers();
+    if (members.length < 4) { toast('יש להזין 4 שמות'); return; }
     const btn = $('#btn-create-group');
     btn.disabled = true;
     btn.innerHTML = '<span>⏳</span><span>יוצר קבוצה...</span>';
     try {
-      const newId = await createGroup();
+      const newId = await createGroup(members);
+      applyMembers(members);
       storeGroupId(newId);
       loadHistory();
       loadWeekState();
@@ -2300,6 +2324,8 @@ const analytics = getAnalytics(app);
       setTimeout(() => inputEl.classList.remove('error'), 1500);
       return;
     }
+    const members = await loadGroupMembers(code);
+    if (members) applyMembers(members);
     storeGroupId(code);
     loadHistory();
     loadWeekState();
@@ -2319,6 +2345,8 @@ const analytics = getAnalytics(app);
       showScreen('onboard');
       return;
     }
+    const members = await loadGroupMembers(pendingId);
+    if (members) applyMembers(members);
     storeGroupId(pendingId);
     loadHistory();
     loadWeekState();
@@ -2366,9 +2394,14 @@ const analytics = getAnalytics(app);
   async function initApp() {
     initFirebase();
 
-    // Check URL for ?group= invite param
+    // Check URL for ?group=XXX param (also handles ?group-XXX typo)
     const urlParams = new URLSearchParams(window.location.search);
-    const urlGroupId = urlParams.get('group');
+    let urlGroupId = urlParams.get('group');
+    if (!urlGroupId) {
+      // fallback: scan raw search string for 6-char alphanumeric after "group"
+      const m = window.location.search.match(/[?&]group[-=]([A-Za-z0-9]{6})/i);
+      if (m) urlGroupId = m[1];
+    }
     const storedGroupId = localStorage.getItem(STORAGE_GROUP_ID);
 
     if (urlGroupId) {
@@ -2383,6 +2416,9 @@ const analytics = getAnalytics(app);
 
     if (storedGroupId) {
       storeGroupId(storedGroupId);
+      // Load member names before rendering
+      const members = await loadGroupMembers(storedGroupId);
+      if (members) applyMembers(members);
       loadHistory();
       loadWeekState();
       startGroupListener();

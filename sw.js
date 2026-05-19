@@ -1,7 +1,7 @@
 // Service Worker for הסעות חוג כדורגל
 // Caches the app shell so it loads instantly and works offline.
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `carpool-${CACHE_VERSION}`;
 
 // Files that make up the "app shell" — the bare minimum to render.
