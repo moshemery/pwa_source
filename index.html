@@ -1,0 +1,2410 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#F4EDDA" />
+<title>הסעות חוג כדורגל</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="הסעות כדורגל">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+  :root {
+    --cream: #F4EDDA;
+    --paper: #FBF7EA;
+    --paper-deep: #F1E9CF;
+    --ink: #1B2E27;
+    --ink-soft: #4A5C54;
+    --muted: #8A968F;
+    --forest: #1F4E40;
+    --forest-deep: #143B30;
+    --saffron: #D98E2B;
+    --terracotta: #C5563A;
+    --rank-red: #B23A2A;
+    --rank-red-soft: #F5DCD7;
+    --rank-mid: #BDB494;
+    --border: #E3D9BD;
+    --border-soft: #EFE6CC;
+    --whatsapp: #25D366;
+    --whatsapp-deep: #128C7E;
+    --shadow-sm: 0 1px 2px rgba(20,40,30,.06), 0 2px 8px rgba(20,40,30,.04);
+    --shadow-md: 0 4px 12px rgba(20,40,30,.08), 0 12px 32px rgba(20,40,30,.06);
+    --shadow-lg: 0 8px 24px rgba(20,40,30,.12), 0 24px 48px rgba(20,40,30,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    background: var(--cream); color: var(--ink);
+    font-family: 'Rubik', system-ui, sans-serif;
+    font-size: 16px; line-height: 1.5;
+    min-height: 100vh; min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(31,78,64,.04) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(217,142,43,.05) 0%, transparent 40%);
+    background-attachment: fixed;
+  }
+  .app {
+    max-width: 480px; margin: 0 auto;
+    padding: 24px 20px 40px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+  .screen { animation: fadeUp .45s cubic-bezier(.2,.7,.2,1) both; }
+  .screen.hidden { display: none; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .header { text-align: center; margin-bottom: 22px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: .18em;
+    color: var(--forest); text-transform: uppercase;
+    margin-bottom: 14px; display: inline-block;
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 100px; background: var(--paper);
+  }
+  h1.title {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 900;
+    font-size: clamp(38px, 10vw, 48px); line-height: 1;
+    color: var(--ink); letter-spacing: -0.01em; margin-bottom: 12px;
+  }
+  h1.title em { font-style: italic; font-weight: 500; color: var(--forest); }
+  .subtitle { font-size: 15px; color: var(--ink-soft); font-weight: 500; max-width: 380px; margin: 0 auto; }
+
+  .week-info { display: flex; justify-content: center; margin-bottom: 18px; }
+  .week-info .pill {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: 100px; padding: 8px 16px;
+    font-size: 13px; font-weight: 500; color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+  .week-info .pill strong { color: var(--forest); font-weight: 700; }
+  .week-info .pill .sep { color: var(--border); font-weight: 400; }
+
+  .section {
+    background: var(--paper); border: 1.5px solid var(--border);
+    border-radius: 18px; padding: 18px; margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; gap: 10px;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .section-label-block {
+    margin-bottom: 12px; display: block;
+  }
+  .extra-day-btn {
+    background: transparent; border: 1px dashed var(--border);
+    color: var(--ink-soft); font-family: inherit;
+    font-size: 11px; font-weight: 600;
+    padding: 5px 11px; border-radius: 100px;
+    cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .extra-day-btn:hover { border-color: var(--saffron); color: var(--saffron); border-style: solid; }
+  .extra-day-btn .ico { font-size: 12px; }
+
+  .extra-day-banner {
+    background: rgba(217,142,43,.08);
+    border: 1px solid var(--saffron);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; font-size: 13px;
+  }
+  .extra-day-banner .info {
+    color: var(--ink); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .extra-day-banner .info em {
+    color: var(--saffron); font-style: normal; font-weight: 700;
+  }
+  .extra-day-banner .remove {
+    background: none; border: none; cursor: pointer;
+    color: var(--terracotta); font-family: inherit;
+    font-size: 12px; font-weight: 500;
+    text-decoration: underline; padding: 4px 6px;
+  }
+
+  .parent-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .parent-btn {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 6px;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    color: var(--ink-soft); cursor: pointer;
+    transition: all .18s cubic-bezier(.2,.7,.2,1);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .parent-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+  .parent-btn .pre { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: .04em; }
+  .parent-btn.active {
+    background: var(--forest); border-color: var(--forest); color: white;
+    box-shadow: var(--shadow-sm); transform: translateY(-1px);
+  }
+  .parent-btn.active .pre { color: rgba(255,255,255,0.7); }
+
+  .picker-hint {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 13px; color: var(--ink-soft); text-align: center;
+  }
+  .picker-hint strong { color: var(--forest); font-weight: 600; }
+
+  .schedule-table { display: grid; grid-template-columns: 60px 1fr 1fr; gap: 6px; }
+  .schedule-table .cell-head {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    letter-spacing: .05em; text-align: center; padding: 8px 4px;
+  }
+  .schedule-table .cell-day {
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 16px; font-weight: 700; color: var(--ink);
+    flex-direction: column; gap: 2px;
+  }
+  .cell-day .cell-name {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 16px; font-weight: 700; color: var(--ink);
+    line-height: 1;
+  }
+  .cell-day .cell-date {
+    font-family: 'Rubik', sans-serif;
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    margin-top: 1px; line-height: 1;
+  }
+  .cell-day .extra-mark {
+    font-size: 9px; font-weight: 600; color: var(--saffron);
+    letter-spacing: .05em; text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* "Already sent this week" indicator */
+  .sent-status {
+    background: rgba(31,78,64,0.07);
+    border: 1px solid var(--forest);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 13px; color: var(--forest); font-weight: 600;
+    text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .sent-status.hidden { display: none; }
+  .sent-status.locked {
+    background: rgba(31,78,64,0.13);
+    border-width: 1.5px;
+    box-shadow: 0 1px 3px rgba(31,78,64,0.10);
+  }
+  .sent-status .ico {
+    background: var(--forest); color: white;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .slot-cell {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 8px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    color: var(--ink-soft); cursor: pointer;
+    transition: all .18s cubic-bezier(.2,.7,.2,1);
+    text-align: center; min-height: 56px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  }
+  .slot-cell:hover:not(.locked):not(.blocked) { border-color: var(--ink-soft); color: var(--ink); }
+  .slot-cell .placeholder { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .slot-cell .ico { font-size: 13px; }
+  .slot-cell.filled {
+    background: var(--forest); border-color: var(--forest); color: white;
+    font-weight: 700; box-shadow: var(--shadow-sm);
+  }
+  .slot-cell.filled .ico { font-size: 14px; }
+  .slot-cell.filled .owner { font-size: 14px; }
+  .slot-cell.filled-other {
+    background: var(--paper-deep); border-color: var(--saffron);
+    color: var(--ink); font-weight: 600; border-style: solid;
+  }
+  .slot-cell.locked { cursor: default; }
+  .slot-cell.blocked {
+    cursor: not-allowed; opacity: 0.55;
+    border-style: dashed;
+  }
+  .slot-cell.blocked .placeholder {
+    color: var(--terracotta); font-size: 11px;
+  }
+
+  .absent-row {
+    display: grid; grid-template-columns: 60px 1fr; gap: 8px;
+    align-items: center; margin-bottom: 8px;
+  }
+  .absent-row:last-child { margin-bottom: 0; }
+  .absent-row .label { font-size: 13px; font-weight: 600; color: var(--ink-soft); text-align: center; }
+  .absent-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .absent-chip {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 8px 4px;
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    color: var(--ink-soft); cursor: pointer;
+    transition: all .18s; text-align: center;
+  }
+  .absent-chip:hover:not(:disabled) { border-color: var(--ink-soft); color: var(--ink); }
+  .absent-chip.selected {
+    background: var(--terracotta); border-color: var(--terracotta);
+    color: white; font-weight: 600;
+  }
+  .absent-chip:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+
+  .preview {
+    background: var(--paper); border: 1.5px solid var(--border-soft);
+    border-radius: 18px; padding: 18px 20px; margin-bottom: 16px;
+    box-shadow: var(--shadow-sm); margin-top: 14px;
+  }
+  .preview .label {
+    font-size: 11px; font-weight: 600; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 10px; display: block;
+  }
+  .preview .text {
+    font-size: 14px; line-height: 1.7; color: var(--ink);
+    white-space: pre-line; font-weight: 500;
+  }
+
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  .btn {
+    border: none; border-radius: 16px; padding: 18px 20px;
+    font-family: inherit; font-size: 17px; font-weight: 600;
+    cursor: pointer; transition: all .18s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-share {
+    background: var(--whatsapp); color: white;
+    box-shadow: 0 4px 14px rgba(37,211,102,.3), 0 1px 3px rgba(37,211,102,.2);
+  }
+  .btn-share:hover:not(:disabled) {
+    background: var(--whatsapp-deep); transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37,211,102,.35), 0 2px 5px rgba(37,211,102,.2);
+  }
+  .btn-share:active:not(:disabled) { transform: translateY(0); }
+  .btn-share svg { width: 22px; height: 22px; }
+  .btn-copy {
+    background: transparent; color: var(--ink-soft);
+    border: 1.5px solid var(--border); font-size: 15px; padding: 14px 20px;
+  }
+  .btn-copy:hover { border-color: var(--forest); color: var(--forest); }
+  .btn-copy.copied { background: var(--forest); color: white; border-color: var(--forest); }
+  .btn-save {
+    background: var(--forest); color: white;
+    box-shadow: 0 4px 14px rgba(31,78,64,.3);
+  }
+  .btn-save:hover:not(:disabled) { background: var(--forest-deep); transform: translateY(-1px); }
+  .btn-save:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; box-shadow: none; }
+
+  .reset-row { margin-top: 14px; text-align: center; }
+  .reset-btn {
+    background: none; border: none; color: var(--muted);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    text-decoration: underline; padding: 6px;
+    transition: color .15s;
+  }
+  .reset-btn:hover { color: var(--terracotta); }
+
+  .nav-links {
+    margin-top: 28px; display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap;
+  }
+  .nav-link {
+    background: var(--paper); border: 1px solid var(--border);
+    color: var(--ink-soft); font-family: inherit; font-size: 13px;
+    font-weight: 500; padding: 8px 16px; border-radius: 100px;
+    cursor: pointer; transition: all .18s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-link:hover { border-color: var(--forest); color: var(--forest); background: var(--paper-deep); }
+  .footer { margin-top: 24px; text-align: center; font-size: 12px; color: var(--muted); }
+
+  .date-input-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .date-input {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    font-family: inherit; font-size: 15px; font-weight: 500;
+    color: var(--ink); width: 100%; direction: ltr; text-align: center;
+  }
+  .date-input:focus { outline: none; border-color: var(--forest); }
+  .date-info {
+    font-size: 13px; color: var(--ink-soft); text-align: center;
+    padding: 8px 0; line-height: 1.6;
+  }
+  .date-info strong { color: var(--forest); font-weight: 700; }
+  .date-info.empty { color: var(--muted); font-style: italic; }
+  .date-info .edit-mode {
+    display: block;
+    margin-top: 6px;
+    color: var(--saffron);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .date-info .too-old {
+    display: block;
+    margin-top: 6px;
+    color: var(--terracotta);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+  }
+  .back-btn {
+    background: none; border: none; color: var(--ink-soft);
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    cursor: pointer; padding: 8px 0;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: color .15s;
+  }
+  .back-btn:hover { color: var(--forest); }
+  .week-label {
+    font-size: 12px; font-weight: 600; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase;
+  }
+
+  .history-intro { text-align: center; margin-bottom: 20px; }
+  .history-intro .title {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    font-size: 36px; color: var(--ink); margin-bottom: 6px;
+  }
+  .history-intro .count { font-size: 14px; color: var(--ink-soft); margin-bottom: 16px; }
+  .history-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn-pill {
+    background: var(--paper); border: 1.5px solid var(--forest);
+    color: var(--forest); font-family: inherit; font-size: 13px;
+    font-weight: 600; padding: 10px 18px; border-radius: 100px;
+    cursor: pointer; transition: all .18s;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-pill:hover:not(:disabled) {
+    background: var(--forest); color: white; transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .btn-pill:disabled {
+    background: var(--paper-deep); border-color: var(--border);
+    color: var(--muted); cursor: not-allowed; box-shadow: none;
+  }
+
+  .ranking {
+    background: var(--paper); border: 1.5px solid var(--border-soft);
+    border-radius: 14px; padding: 12px 14px;
+    box-shadow: var(--shadow-sm); margin-top: 24px;
+  }
+  .ranking-title {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    font-size: 14px; color: var(--ink); margin-bottom: 2px;
+  }
+  .ranking-sub { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .ranking-list { display: flex; flex-direction: column; gap: 4px; }
+  .ranking-row {
+    display: grid; grid-template-columns: 22px 1fr auto; gap: 8px;
+    align-items: center; padding: 6px 10px;
+    background: var(--cream); border-radius: 8px;
+    font-size: 12px; border-right: 2px solid var(--rank-mid);
+  }
+  .ranking-row.rank-last { background: var(--rank-red-soft); border-right-color: var(--rank-red); }
+  .ranking-row .rank-num {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700; font-size: 13px;
+    text-align: center; color: var(--ink-soft);
+  }
+  .ranking-row.rank-last .rank-num { color: var(--rank-red); }
+  .ranking-row .rank-name { font-weight: 600; color: var(--ink); font-size: 12px; }
+  .ranking-row .rank-count {
+    font-weight: 700; font-size: 11px; color: var(--ink-soft);
+    background: var(--paper); padding: 2px 8px; border-radius: 100px;
+    min-width: 28px; text-align: center;
+  }
+  .ranking-row.rank-last .rank-count { background: var(--rank-red); color: white; }
+  .ranking-divider {
+    margin: 10px 0 8px; font-size: 10px; font-weight: 600; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase; text-align: center;
+  }
+  .ranking-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 6px 0; }
+
+  .month-divider {
+    margin: 24px 0 12px; padding: 0 4px;
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    font-size: 18px; color: var(--forest);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .month-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .month-divider:first-child { margin-top: 0; }
+  .history-item {
+    background: var(--paper); border: 1.5px solid var(--border-soft);
+    border-radius: 16px; margin-bottom: 8px; overflow: hidden;
+    box-shadow: var(--shadow-sm); transition: border-color .15s;
+  }
+  .history-item:hover { border-color: var(--border); }
+  .history-item.manual { border-style: dashed; }
+  .history-head {
+    width: 100%; background: none; border: none;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; font-family: inherit; text-align: right;
+  }
+  .history-head .h-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--cream); display: grid; place-items: center;
+    flex-shrink: 0; font-size: 18px;
+  }
+  .history-head .h-body { flex: 1; min-width: 0; }
+  .history-head .h-title {
+    font-size: 14px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .h-tag {
+    font-size: 9px; letter-spacing: .1em; font-weight: 600;
+    background: var(--saffron); color: white;
+    padding: 2px 7px; border-radius: 100px; text-transform: uppercase;
+  }
+  .h-lock { font-size: 12px; color: var(--muted); }
+  .history-head .h-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .history-head .h-arrow {
+    color: var(--muted); font-size: 16px; transition: transform .2s; flex-shrink: 0;
+  }
+  .history-item.open .history-head .h-arrow { transform: rotate(180deg); }
+  .history-body { padding: 0 16px 16px; display: none; }
+  .history-item.open .history-body { display: block; }
+  .history-body .h-text {
+    background: var(--cream); border-radius: 12px; padding: 14px;
+    font-size: 13px; line-height: 1.65; color: var(--ink);
+    white-space: pre-line; margin-bottom: 12px;
+  }
+  .history-body .h-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .h-action {
+    background: var(--paper); border: 1px solid var(--border);
+    color: var(--ink-soft); font-family: inherit; font-size: 12px;
+    font-weight: 500; padding: 8px 14px; border-radius: 10px;
+    cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .h-action:hover { border-color: var(--forest); color: var(--forest); }
+  .h-action.danger:hover { border-color: var(--terracotta); color: var(--terracotta); }
+  .h-locked-note {
+    font-size: 11px; color: var(--muted); font-style: italic;
+    display: inline-flex; align-items: center; gap: 4px; margin-right: auto;
+  }
+  .history-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .history-empty .ico { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+  .history-empty .msg { font-size: 15px; }
+  .clear-row { margin-top: 28px; text-align: center; }
+  .clear-btn {
+    background: none; border: none; color: var(--muted);
+    font-family: inherit; font-size: 12px; cursor: pointer;
+    text-decoration: underline; padding: 6px;
+  }
+  .clear-btn:hover { color: var(--terracotta); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--forest); color: white;
+    padding: 12px 20px; border-radius: 100px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transition: transform .3s cubic-bezier(.2,.7,.2,1);
+    z-index: 100; pointer-events: none;
+    max-width: 90%; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(20,40,30,.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+    animation: fade .2s ease;
+  }
+  .modal-backdrop.show { display: flex; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--paper); border-radius: 22px;
+    padding: 24px 22px; box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 360px; text-align: center;
+    animation: pop .25s cubic-bezier(.2,.7,.2,1);
+  }
+  @keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h3 {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    font-size: 22px; color: var(--ink); margin-bottom: 6px;
+  }
+  .modal p {
+    font-size: 14px; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5;
+  }
+  .modal .day-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+    margin-bottom: 18px;
+  }
+  .modal .day-opt {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 12px 8px;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    color: var(--ink); cursor: pointer; transition: all .15s;
+  }
+  .modal .day-opt:hover { border-color: var(--forest); color: var(--forest); }
+  .modal .modal-actions {
+    display: flex; gap: 8px; justify-content: center;
+  }
+  .modal .modal-btn {
+    flex: 1; background: transparent; border: 1.5px solid var(--border);
+    color: var(--ink-soft); font-family: inherit;
+    font-size: 14px; font-weight: 600;
+    padding: 12px; border-radius: 12px; cursor: pointer;
+    transition: all .15s;
+  }
+  .modal .modal-btn.primary {
+    background: var(--forest); color: white; border-color: var(--forest);
+  }
+  .modal .modal-btn.primary:hover:not(:disabled) { background: var(--forest-deep); }
+  .modal .modal-btn.primary:disabled {
+    background: var(--border); border-color: var(--border);
+    color: var(--muted); cursor: not-allowed;
+  }
+  .modal .modal-btn:hover:not(.primary) { border-color: var(--ink-soft); color: var(--ink); }
+  .modal .pin-input {
+    width: 100%; background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 14px;
+    font-family: inherit; font-size: 22px; font-weight: 600;
+    text-align: center; letter-spacing: 0.5em;
+    color: var(--ink); margin-bottom: 18px;
+    direction: ltr;
+  }
+  .modal .pin-input:focus { outline: none; border-color: var(--forest); }
+  .modal .pin-input.error {
+    border-color: var(--terracotta);
+    animation: shake .35s;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60% { transform: translateX(-6px); }
+    40%,80% { transform: translateX(6px); }
+  }
+  .modal .pin-error-msg {
+    font-size: 12px; color: var(--terracotta); margin-top: -10px; margin-bottom: 14px; min-height: 16px;
+  }
+
+  /* Print / PDF */
+  #print-area { display: none; }
+  @media print {
+    @page { size: A4; margin: 18mm 16mm; }
+    body { background: white !important; background-image: none !important; }
+    main.app { display: none !important; }
+    .toast { display: none !important; }
+    .modal-backdrop { display: none !important; }
+    #print-area { display: block !important; }
+  }
+  #print-area { font-family: 'Rubik', system-ui, sans-serif; color: #1B2E27; background: white; direction: rtl; }
+  #print-area .pdf-header { text-align: center; margin-bottom: 14mm; padding-bottom: 6mm; border-bottom: 0.5pt solid #C9BFA0; }
+  #print-area .pdf-title { font-family: 'Frank Ruhl Libre', serif; font-weight: 900; font-size: 26pt; line-height: 1.1; margin-bottom: 4pt; color: #1B2E27; }
+  #print-area .pdf-title em { font-style: italic; font-weight: 500; color: #1F4E40; }
+  #print-area .pdf-sub { font-size: 11pt; color: #6B7C73; }
+  #print-area .pdf-rank-block { padding: 8pt 10pt; border: 0.5pt solid #C9BFA0; border-radius: 4pt; page-break-inside: avoid; }
+  #print-area .pdf-rank-title { font-family: 'Frank Ruhl Libre', serif; font-weight: 700; font-size: 13pt; color: #1F4E40; margin-bottom: 4pt; }
+  #print-area .pdf-rank-row { display: flex; justify-content: space-between; padding: 3pt 0; border-bottom: 0.3pt solid #EFE6CC; font-size: 10pt; }
+  #print-area .pdf-rank-row:last-child { border-bottom: none; }
+  #print-area .pdf-rank-row .num { font-weight: 700; color: #6B7C73; min-width: 24pt; }
+  #print-area .pdf-month { font-family: 'Frank Ruhl Libre', serif; font-weight: 700; font-size: 16pt; color: #1F4E40; margin: 14pt 0 8pt; padding-bottom: 4pt; border-bottom: 0.5pt solid #C9BFA0; page-break-after: avoid; }
+  #print-area .pdf-month:first-of-type { margin-top: 0; }
+  #print-area .pdf-entry { margin-bottom: 8pt; padding: 8pt 10pt; border: 0.5pt solid #D4C99F; border-radius: 4pt; page-break-inside: avoid; }
+  #print-area .pdf-entry-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.5pt solid #EFE6CC; padding-bottom: 4pt; margin-bottom: 6pt; gap: 12pt; }
+  #print-area .pdf-entry-title { font-weight: 700; font-size: 11pt; color: #1B2E27; }
+  #print-area .pdf-entry-date { font-size: 9pt; color: #6B7C73; white-space: nowrap; }
+  #print-area .pdf-entry-msg { font-size: 10pt; line-height: 1.65; white-space: pre-line; color: #1B2E27; }
+  #print-area .pdf-footer { margin-top: 14mm; padding-top: 6mm; border-top: 0.5pt solid #C9BFA0; text-align: center; font-size: 9pt; color: #8A968F; }
+
+  @media (max-width: 360px) {
+    h1.title { font-size: 34px; }
+    .parent-btn { font-size: 13px; padding: 10px 4px; }
+  }
+
+  /* Onboarding & group screens */
+  .onboard-section {
+    background: var(--paper); border: 1.5px solid var(--border);
+    border-radius: 18px; padding: 22px 20px; margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .onboard-section .os-title {
+    font-family: 'Frank Ruhl Libre', serif; font-weight: 700;
+    font-size: 18px; color: var(--forest); margin-bottom: 6px;
+  }
+  .onboard-section .os-desc {
+    font-size: 13px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.5;
+  }
+  .onboard-sep {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px; color: var(--muted); font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; margin: 4px 0;
+  }
+  .onboard-sep::before, .onboard-sep::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .group-id-input {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 14px;
+    font-family: inherit; font-size: 22px; font-weight: 700;
+    text-align: center; letter-spacing: 0.3em;
+    color: var(--forest); width: 100%; text-transform: uppercase;
+    direction: ltr; margin-bottom: 10px;
+  }
+  .group-id-input:focus { outline: none; border-color: var(--forest); }
+  .group-id-input.error { border-color: var(--terracotta); animation: shake .35s; }
+  .group-id-input::placeholder { color: var(--muted); font-weight: 400; font-size: 16px; letter-spacing: 0.1em; }
+
+  .group-id-badge {
+    background: var(--paper); border: 1.5px solid var(--forest);
+    border-radius: 14px; padding: 14px 18px;
+    text-align: center; margin-bottom: 12px;
+  }
+  .group-id-badge .badge-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 4px;
+  }
+  .group-id-badge .badge-id {
+    font-family: 'Rubik', monospace; font-size: 28px; font-weight: 700;
+    color: var(--forest); letter-spacing: 0.35em; direction: ltr;
+  }
+
+  .join-confirm-box {
+    background: rgba(31,78,64,.06); border: 1.5px solid var(--forest);
+    border-radius: 18px; padding: 24px 20px; text-align: center; margin-bottom: 20px;
+  }
+  .join-confirm-box .jc-label { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+  .join-confirm-box .jc-id {
+    font-family: 'Rubik', monospace; font-size: 32px; font-weight: 700;
+    color: var(--forest); letter-spacing: 0.4em; direction: ltr;
+  }
+  .footer-group {
+    margin-top: 24px; text-align: center; font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+  }
+  .footer-group .gid {
+    font-family: 'Rubik', monospace; font-weight: 700; letter-spacing: 0.2em;
+    color: var(--forest); font-size: 13px;
+  }
+  .footer-group .leave-btn {
+    background: none; border: none; color: var(--muted);
+    font-family: inherit; font-size: 11px; cursor: pointer;
+    text-decoration: underline; padding: 2px 4px;
+  }
+  .footer-group .leave-btn:hover { color: var(--terracotta); }
+  .sync-indicator {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--muted);
+  }
+  .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+  }
+  .sync-dot.online { background: var(--whatsapp); }
+  .sync-dot.syncing { background: var(--saffron); animation: pulse .8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- ========= ONBOARDING ========= -->
+  <section class="screen hidden" id="screen-onboard">
+    <header class="header">
+      <span class="eyebrow">קארפול שבועי</span>
+      <h1 class="title">הסעות <em>חוג כדורגל</em></h1>
+      <p class="subtitle">ניהול הסעות משותף לכל הורי הקבוצה</p>
+    </header>
+
+    <div class="onboard-section">
+      <div class="os-title">➕ צור קבוצה חדשה</div>
+      <div class="os-desc">יוצר קוד ייחודי לשיתוף עם הורי הקבוצה. כל ההורים יראו את אותם הנתונים בזמן אמת.</div>
+      <button class="btn btn-save" id="btn-create-group" style="width:100%">
+        <span>⚽</span><span>צור קבוצה חדשה</span>
+      </button>
+    </div>
+
+    <div class="onboard-sep">או</div>
+
+    <div class="onboard-section">
+      <div class="os-title">🔗 הצטרף לקבוצה קיימת</div>
+      <div class="os-desc">הכנס את קוד הקבוצה שקיבלת מהמארגן (6 תווים).</div>
+      <input type="text" id="join-code-input" class="group-id-input"
+             placeholder="XXXXXX" maxlength="6" autocomplete="off" spellcheck="false" />
+      <button class="btn btn-share" id="btn-join-group" style="width:100%" disabled>
+        <span>🔗</span><span>הצטרף לקבוצה</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========= JOIN CONFIRM ========= -->
+  <section class="screen hidden" id="screen-join">
+    <header class="header">
+      <span class="eyebrow">קארפול שבועי</span>
+      <h1 class="title">הצטרפות <em>לקבוצה</em></h1>
+      <p class="subtitle">הוזמנת להצטרף לקבוצת קארפול</p>
+    </header>
+
+    <div class="join-confirm-box">
+      <div class="jc-label">קוד הקבוצה</div>
+      <div class="jc-id" id="join-confirm-id">------</div>
+    </div>
+
+    <p style="font-size:14px;color:var(--ink-soft);text-align:center;margin-bottom:20px;line-height:1.6;">
+      לאחר ההצטרפות הנתונים יסונכרנו עם שאר הורי הקבוצה.
+    </p>
+
+    <div class="actions">
+      <button class="btn btn-save" id="btn-confirm-join">
+        <span>✅</span><span>הצטרף לקבוצה</span>
+      </button>
+      <button class="btn btn-copy" id="btn-cancel-join">ביטול — צור קבוצה חדשה</button>
+    </div>
+  </section>
+
+  <!-- ========= MAIN ========= -->
+  <section class="screen hidden" id="screen-main">
+    <header class="header">
+      <span class="eyebrow">קארפול שבועי</span>
+      <h1 class="title">הסעות <em>חוג כדורגל</em></h1>
+      <p class="subtitle">סמנו את שם ההורה, ובחרו את הזמן המתאים</p>
+    </header>
+
+    <div class="week-info" id="week-info"></div>
+
+    <div class="section">
+      <span class="section-label section-label-block">בחירת הורה פעיל</span>
+      <div class="parent-picker" id="parent-picker"></div>
+      <div class="picker-hint" id="picker-hint">בחרו את ההורה שמסמן עכשיו</div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-label">שיבוץ הסעות</span>
+        <button class="extra-day-btn" id="btn-add-extra-day" type="button">
+          <span class="ico">+</span><span>תוספת יום חריג</span>
+        </button>
+      </div>
+      <div id="extra-banner-main"></div>
+      <div class="schedule-table" id="schedule-table"></div>
+    </div>
+
+    <div class="section">
+      <span class="section-label section-label-block">ילדים שלא מגיעים השבוע</span>
+      <div id="absent-grid"></div>
+    </div>
+
+    <div class="preview">
+      <span class="label">סיכום שיישלח</span>
+      <div class="text" id="summary-preview"></div>
+    </div>
+
+    <div class="sent-status hidden" id="sent-status">
+      <span class="ico" id="sent-status-ico">✓</span>
+      <span id="sent-status-text">סיכום השבוע כבר נשמר בהיסטוריה</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-share" id="btn-summary-share">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.999-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        <span>שלחו סיכום לקבוצה</span>
+      </button>
+      <button class="btn btn-copy" id="btn-summary-copy">העתקת הסיכום</button>
+    </div>
+
+    <div class="reset-row">
+      <button class="reset-btn" id="reset-btn">ניקוי כל הסימונים</button>
+    </div>
+
+    <nav class="nav-links">
+      <button class="nav-link" data-go="history">🕘 היסטוריה</button>
+      <button class="nav-link" id="btn-invite">📲 הזמן הורה</button>
+    </nav>
+
+    <div class="footer-group">
+      <span>קוד קבוצה: <span class="gid" id="footer-group-id">------</span></span>
+      <span class="sync-indicator"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">לא מחובר</span></span>
+      <button class="leave-btn" id="btn-leave-group">עזוב קבוצה</button>
+    </div>
+  </section>
+
+  <!-- ========= ADD HISTORY ========= -->
+  <section class="screen hidden" id="screen-add">
+    <div class="topbar">
+      <button class="back-btn" data-go="back-from-add"><span>›</span><span>חזרה</span></button>
+      <span class="week-label">הזנה ידנית</span>
+    </div>
+
+    <header class="header">
+      <h1 class="title">הוספת <em>שבוע קודם</em></h1>
+      <p class="subtitle">בחרו את התאריך, מלאו את השיבוץ, ושמרו לארכיון</p>
+    </header>
+
+    <div class="section">
+      <span class="section-label section-label-block">תאריך השבוע</span>
+      <div class="date-input-wrap">
+        <input type="date" class="date-input" id="add-date" />
+        <div class="date-info empty" id="add-date-info">בחרו תאריך כדי להמשיך</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="section-label section-label-block">בחירת הורה פעיל</span>
+      <div class="parent-picker" id="add-parent-picker"></div>
+      <div class="picker-hint" id="add-picker-hint">בחרו את ההורה שמסמן עכשיו</div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-label">שיבוץ הסעות</span>
+        <button class="extra-day-btn" id="btn-add-extra-day-2" type="button">
+          <span class="ico">+</span><span>תוספת יום חריג</span>
+        </button>
+      </div>
+      <div id="extra-banner-add"></div>
+      <div class="schedule-table" id="add-schedule-table"></div>
+    </div>
+
+    <div class="section">
+      <span class="section-label section-label-block">ילדים שלא הגיעו אותו שבוע</span>
+      <div id="add-absent-grid"></div>
+    </div>
+
+    <div class="preview">
+      <span class="label">סיכום שיישמר</span>
+      <div class="text" id="add-summary-preview"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-save" id="btn-add-save" disabled>
+        <span>💾</span><span>שמרו רשומה היסטורית</span>
+      </button>
+      <button class="btn btn-copy" data-go="back-from-add">ביטול</button>
+    </div>
+
+    <div class="footer">לאחר השמירה הרשומה תיכנס לארכיון ולא תהיה ניתנת לשינוי</div>
+  </section>
+
+  <!-- ========= History ========= -->
+  <section class="screen hidden" id="screen-history">
+    <div class="topbar">
+      <button class="back-btn" data-go="back-to-main"><span>›</span><span>חזרה</span></button>
+      <span class="week-label">תיעוד</span>
+    </div>
+
+    <div class="history-intro">
+      <h1 class="title">היסטוריה</h1>
+      <p class="count" id="history-count"></p>
+      <div class="history-actions">
+        <button class="btn-pill" id="btn-add-history"><span>➕</span><span>הוספה ידנית</span></button>
+        <button class="btn-pill" id="btn-export" disabled><span>📄</span><span>ייצוא ל-PDF</span></button>
+      </div>
+    </div>
+
+    <div id="history-list"></div>
+
+    <div id="ranking-block"></div>
+
+    <div class="clear-row" id="clear-row" style="display:none;">
+      <button class="clear-btn" id="clear-btn">ניקוי כל ההיסטוריה</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Invite modal -->
+  <div class="modal-backdrop" id="modal-invite">
+    <div class="modal">
+      <h3>📲 הזמן הורה לקבוצה</h3>
+      <p>שתפו את קוד הקבוצה עם הורים נוספים. כל מי שיצטרף יראה את אותם נתונים.</p>
+      <div class="group-id-badge">
+        <div class="badge-label">קוד הקבוצה</div>
+        <div class="badge-id" id="modal-group-id">------</div>
+      </div>
+      <div class="modal-actions" style="flex-direction:column;gap:8px;">
+        <button class="modal-btn primary" id="modal-invite-wa">
+          📱 שלח הזמנה בוואטסאפ
+        </button>
+        <button class="modal-btn" id="modal-invite-copy">
+          🔗 העתק קישור הצטרפות
+        </button>
+        <button class="modal-btn" id="modal-invite-close">סגירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day picker modal -->
+  <div class="modal-backdrop" id="modal-day">
+    <div class="modal">
+      <h3>תוספת יום חריג</h3>
+      <p>בחרו יום נוסף להסעה השבוע. הוא יתווסף לטבלת השיבוץ.</p>
+      <div class="day-grid" id="day-grid"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="modal-day-cancel">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN modal -->
+  <div class="modal-backdrop" id="modal-pin">
+    <div class="modal">
+      <h3 id="pin-title">נדרש קוד אישור</h3>
+      <p id="pin-desc">הקישו את קוד הניהול לאישור הפעולה</p>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pin-input" id="pin-input" autocomplete="off" />
+      <div class="pin-error-msg" id="pin-error"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="pin-cancel">ביטול</button>
+        <button class="modal-btn primary" id="pin-ok">אישור</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+<div id="print-area"></div>
+
+<script>
+// =====================================================
+// FIREBASE CONFIG — Replace with your own project config
+// Setup: https://console.firebase.google.com/
+//   1. Create project → Add web app → copy config below
+//   2. Firestore Database → Create database (test mode)
+//   3. Firestore Rules → paste the rules from the README
+// =====================================================
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const FIREBASE_CONFIG= {
+  apiKey: "AIzaSyCFv5tfyjG82UxoKvkNllqovRwtcnhXL04",
+  authDomain: "dirve-app-afc22.firebaseapp.com",
+  projectId: "dirve-app-afc22",
+  storageBucket: "dirve-app-afc22.firebasestorage.app",
+  messagingSenderId: "373274542499",
+  appId: "1:373274542499:web:0fc0876cf587ab537d5a16",
+  measurementId: "G-05E8E5JJ79"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
+
+// =====================================================
+</script>
+
+<script>
+(() => {
+  const FAMILIES = ['אורי', 'איתן', 'נטע', 'דוראל'];
+  const DEFAULT_DAYS = ['שני', 'חמישי'];
+  const ALL_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי']; // no Saturday
+  const DAY_INDEX = { 'ראשון': 0, 'שני': 1, 'שלישי': 2, 'רביעי': 3, 'חמישי': 4, 'שישי': 5 };
+  const STORAGE_HISTORY = 'carpool_history_v1';
+  const STORAGE_WEEK_STATE = 'carpool_week_state_v1';
+  const STORAGE_GROUP_ID = 'carpool_group_id_v1';
+  const ADMIN_PIN = '1234';
+
+  // ===== Firebase / Group state =====
+  let db = null;
+  let groupId = null;
+  let unsubscribeListener = null;
+  let firestoreAvailable = false;
+  let syncTimeout = null;
+
+  function isFirebaseConfigured() {
+    return typeof FIREBASE_CONFIG !== 'undefined' &&
+           FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('REPLACE_');
+  }
+
+  function initFirebase() {
+    if (!isFirebaseConfigured()) return false;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+      firestoreAvailable = true;
+      return true;
+    } catch (e) {
+      console.warn('Firebase init failed:', e);
+      return false;
+    }
+  }
+
+  function generateGroupId() {
+    // Avoids visually confusing chars: 0,O,I,1
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let id = '';
+    for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  }
+
+  function setSyncStatus(status) {
+    const dot = document.getElementById('sync-dot');
+    const lbl = document.getElementById('sync-label');
+    if (!dot || !lbl) return;
+    dot.className = 'sync-dot ' + status;
+    lbl.textContent = status === 'online' ? 'מחובר' : status === 'syncing' ? 'מסנכרן...' : 'לא מחובר';
+  }
+
+  function setGroupInUI(id) {
+    const footerEl = document.getElementById('footer-group-id');
+    const modalEl  = document.getElementById('modal-group-id');
+    if (footerEl) footerEl.textContent = id || '------';
+    if (modalEl)  modalEl.textContent  = id || '------';
+  }
+
+  async function createGroup() {
+    if (!db) return generateGroupId(); // offline fallback
+    let newId;
+    for (let i = 0; i < 10; i++) {
+      newId = generateGroupId();
+      const doc = await db.collection('groups').doc(newId).get();
+      if (!doc.exists) break;
+    }
+    await db.collection('groups').doc(newId).set({
+      created: firebase.firestore.FieldValue.serverTimestamp(),
+      history: [],
+      weekState: null,
+    });
+    return newId;
+  }
+
+  async function checkGroupExists(id) {
+    if (!db) return false;
+    try {
+      const doc = await db.collection('groups').doc(id.toUpperCase()).get();
+      return doc.exists;
+    } catch (e) { return false; }
+  }
+
+  function storeGroupId(id) {
+    groupId = id.toUpperCase();
+    localStorage.setItem(STORAGE_GROUP_ID, groupId);
+    setGroupInUI(groupId);
+  }
+
+  function getInviteUrl() {
+    const base = window.location.origin + window.location.pathname.replace(/\/$/, '');
+    return base + '?group=' + groupId;
+  }
+
+  function startGroupListener() {
+    if (!db || !groupId) { setSyncStatus('offline'); return; }
+    if (unsubscribeListener) unsubscribeListener();
+    setSyncStatus('syncing');
+    unsubscribeListener = db.collection('groups').doc(groupId).onSnapshot(
+      (doc) => {
+        if (!doc.exists) { setSyncStatus('offline'); return; }
+        setSyncStatus('online');
+        const data = doc.data();
+
+        // Update history (only if different from local to avoid loops)
+        const remote = data.history || [];
+        if (JSON.stringify(remote) !== JSON.stringify(state.history)) {
+          state.history = remote;
+          try { localStorage.setItem(STORAGE_HISTORY, JSON.stringify(state.history)); } catch(e) {}
+          if (document.getElementById('screen-history') &&
+              !document.getElementById('screen-history').classList.contains('hidden')) {
+            renderHistory();
+          }
+        }
+
+        // Update week state for current week
+        const ws = data.weekState;
+        if (ws && ws.weekId === dateToInputValue(thisWeekMonday())) {
+          mainForm.state.activeParent = ws.activeParent || null;
+          mainForm.state.extraDays = Array.isArray(ws.extraDays) ? [...ws.extraDays] : [];
+          ensureSlotKeys(mainForm);
+          Object.keys(ws.slots || {}).forEach(k => {
+            if (k in mainForm.state.slots) mainForm.state.slots[k] = ws.slots[k];
+          });
+          Object.keys(ws.absent || {}).forEach(k => {
+            mainForm.state.absent[k] = new Set(ws.absent[k] || []);
+          });
+          if (!document.getElementById('screen-main').classList.contains('hidden')) {
+            renderWeekInfo();
+            renderForm(mainForm);
+            renderSentStatus();
+          }
+        }
+      },
+      (err) => { console.warn('Firestore listener error:', err); setSyncStatus('offline'); }
+    );
+  }
+
+  function scheduleSyncWeekState() {
+    // debounce — avoid hammering Firestore on every tap
+    clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => pushWeekStateToFirestore(), 800);
+  }
+
+  async function pushWeekStateToFirestore() {
+    if (!db || !groupId) return;
+    setSyncStatus('syncing');
+    try {
+      const weekState = {
+        weekId: dateToInputValue(thisWeekMonday()),
+        activeParent: mainForm.state.activeParent,
+        slots: { ...mainForm.state.slots },
+        absent: Object.fromEntries(
+          Object.entries(mainForm.state.absent).map(([k, v]) => [k, Array.from(v)])
+        ),
+        extraDays: [...mainForm.state.extraDays],
+      };
+      await db.collection('groups').doc(groupId).update({
+        weekState,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setSyncStatus('online');
+    } catch (e) {
+      console.warn('Firestore week state push failed:', e);
+      setSyncStatus('offline');
+    }
+  }
+
+  async function pushHistoryToFirestore() {
+    if (!db || !groupId) return;
+    try {
+      await db.collection('groups').doc(groupId).update({
+        history: state.history,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e) { console.warn('Firestore history push failed:', e); }
+  }
+
+  function newFormState() {
+    return {
+      activeParent: null,
+      slots: {},          // 'day|action' → family
+      absent: {},         // day → Set
+      extraDays: [],      // list of extra day names beyond defaults
+    };
+  }
+  function ensureSlotKeys(form) {
+    const days = activeDaysFor(form);
+    days.forEach(d => {
+      ['לקחת', 'להחזיר'].forEach(action => {
+        const key = `${d}|${action}`;
+        if (!(key in form.state.slots)) form.state.slots[key] = null;
+      });
+    });
+    days.forEach(d => { if (!form.state.absent[d]) form.state.absent[d] = new Set(); });
+  }
+  function activeDaysFor(form) {
+    return [...DEFAULT_DAYS, ...form.state.extraDays];
+  }
+
+  const mainForm = {
+    state: newFormState(),
+    els: {
+      picker: '#parent-picker', hint: '#picker-hint',
+      schedule:'#schedule-table', absent: '#absent-grid', preview:'#summary-preview',
+      banner: '#extra-banner-main',
+    },
+    getDates: () => getThisWeekDates(activeDaysFor(mainForm)),
+  };
+  const addForm = {
+    state: newFormState(),
+    mondayDate: null,
+    editingEntryId: null,  // if set, save will replace this entry
+    els: {
+      picker: '#add-parent-picker', hint: '#add-picker-hint',
+      schedule:'#add-schedule-table', absent: '#add-absent-grid', preview:'#add-summary-preview',
+      banner: '#extra-banner-add',
+    },
+    getDates: () => {
+      if (!addForm.mondayDate) return null;
+      const out = {};
+      activeDaysFor(addForm).forEach(d => {
+        out[d] = addDays(addForm.mondayDate, DAY_INDEX[d] - 1);
+      });
+      return out;
+    },
+  };
+  // initialize default slot keys
+  ensureSlotKeys(mainForm);
+  ensureSlotKeys(addForm);
+
+  const state = { history: [] };
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const screens = {
+    onboard: $('#screen-onboard'),
+    join: $('#screen-join'),
+    main: $('#screen-main'),
+    add: $('#screen-add'),
+    history: $('#screen-history'),
+  };
+
+  function showScreen(name) {
+    Object.entries(screens).forEach(([k, el]) => el && el.classList.toggle('hidden', k !== name));
+    if (name === 'main') { renderWeekInfo(); renderForm(mainForm); renderSentStatus(); }
+    if (name === 'add')  { renderForm(addForm); renderAddDateInfo(); updateAddSaveBtn(); }
+    if (name === 'history') renderHistory();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ===== Storage =====
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_HISTORY);
+      state.history = raw ? JSON.parse(raw) : [];
+    } catch (e) { state.history = []; }
+  }
+  function saveHistory() {
+    try { localStorage.setItem(STORAGE_HISTORY, JSON.stringify(state.history)); } catch(e) {}
+    pushHistoryToFirestore();
+  }
+  function addToHistory(entry) {
+    if (!entry.timestamp) entry.timestamp = new Date().toISOString();
+    if (!entry.id) entry.id = Math.random().toString(36).slice(2, 10);
+    state.history.push(entry);
+    state.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    saveHistory();
+  }
+  function deleteHistoryEntry(id) {
+    state.history = state.history.filter(e => e.id !== id);
+    saveHistory();
+    renderHistory();
+  }
+
+  // ===== Week state persistence =====
+  // The main form's selections persist during the week and clear when the week rolls over.
+  function saveWeekState() {
+    try {
+      const monday = thisWeekMonday();
+      const data = {
+        weekId: dateToInputValue(monday),
+        state: {
+          activeParent: mainForm.state.activeParent,
+          slots: { ...mainForm.state.slots },
+          absent: Object.fromEntries(
+            Object.entries(mainForm.state.absent).map(([k, v]) => [k, Array.from(v)])
+          ),
+          extraDays: [...mainForm.state.extraDays],
+        },
+      };
+      localStorage.setItem(STORAGE_WEEK_STATE, JSON.stringify(data));
+    } catch(e) {}
+    scheduleSyncWeekState();
+  }
+  function loadWeekState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_WEEK_STATE);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const currentWeekId = dateToInputValue(thisWeekMonday());
+      if (data.weekId !== currentWeekId) {
+        // Different week → discard old state
+        localStorage.removeItem(STORAGE_WEEK_STATE);
+        return;
+      }
+      const s = data.state || {};
+      mainForm.state.activeParent = s.activeParent || null;
+      mainForm.state.extraDays = Array.isArray(s.extraDays) ? [...s.extraDays] : [];
+      ensureSlotKeys(mainForm);
+      // populate slots that we know about
+      Object.keys(s.slots || {}).forEach(k => {
+        if (k in mainForm.state.slots) mainForm.state.slots[k] = s.slots[k];
+      });
+      // populate absent sets
+      Object.keys(s.absent || {}).forEach(k => {
+        if (mainForm.state.absent[k]) {
+          mainForm.state.absent[k] = new Set(s.absent[k]);
+        }
+      });
+    } catch(e) {}
+  }
+  function clearWeekState() {
+    try { localStorage.removeItem(STORAGE_WEEK_STATE); } catch(e) {}
+  }
+
+  // ===== Manual-entry editing window =====
+  // After this many days from the entry's Monday, the entry can no longer be
+  // edited — not even via the manual-entry button.
+  const MAX_EDIT_DAYS = 14;
+  function daysSinceMonday(mondayDate) {
+    if (!mondayDate) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const m = new Date(mondayDate); m.setHours(0,0,0,0);
+    return Math.floor((today - m) / (1000 * 60 * 60 * 24));
+  }
+  function existingEntryForDate(monday) {
+    if (!monday) return null;
+    const wid = dateToInputValue(monday);
+    return state.history.find(e => {
+      if (!e.data || !e.data.dates || !e.data.dates['שני']) return false;
+      return dateToInputValue(new Date(e.data.dates['שני'])) === wid;
+    }) || null;
+  }
+  function entryEditableViaManual(entry) {
+    if (!entry || !entry.data || !entry.data.dates || !entry.data.dates['שני']) return false;
+    const d = daysSinceMonday(new Date(entry.data.dates['שני']));
+    return d !== null && d <= MAX_EDIT_DAYS;
+  }
+  function loadEntryIntoAddForm(entry) {
+    clearForm(addForm);
+    const extras = (entry.data.extraDays || []).filter(d => !DEFAULT_DAYS.includes(d));
+    addForm.state.extraDays = [...extras];
+    ensureSlotKeys(addForm);
+    Object.keys(entry.data.slots || {}).forEach(k => {
+      if (k in addForm.state.slots) {
+        addForm.state.slots[k] = entry.data.slots[k];
+      }
+    });
+    Object.keys(entry.data.absent || {}).forEach(k => {
+      addForm.state.absent[k] = new Set(entry.data.absent[k] || []);
+    });
+  }
+
+  // ===== Completion checks =====
+  // The "4 options" are the 4 default-day slots: שני|לקחת, שני|להחזיר, חמישי|לקחת, חמישי|להחזיר.
+  // Extra days don't affect lock state.
+  function isFormComplete(form) {
+    return DEFAULT_DAYS.every(d =>
+      ['לקחת', 'להחזיר'].every(a => !!form.state.slots[`${d}|${a}`])
+    );
+  }
+  function isEntryComplete(entry) {
+    if (!entry || !entry.data || !entry.data.slots) return false;
+    return DEFAULT_DAYS.every(d =>
+      ['לקחת', 'להחזיר'].every(a => !!entry.data.slots[`${d}|${a}`])
+    );
+  }
+
+  // ===== Duplicate-prevention / replace logic =====
+  function thisWeekMondayISO() {
+    const dates = mainForm.getDates();
+    if (!dates || !dates['שני']) return null;
+    return new Date(dates['שני']).toISOString().slice(0, 10);
+  }
+  function existingEntryForThisWeek() {
+    const wid = thisWeekMondayISO();
+    if (!wid) return null;
+    return state.history.find(e =>
+      !e.manualEntry &&
+      e.data && e.data.dates && e.data.dates['שני'] &&
+      new Date(e.data.dates['שני']).toISOString().slice(0, 10) === wid
+    ) || null;
+  }
+  function renderSentStatus() {
+    const el = $('#sent-status');
+    if (!el) return;
+    const existing = existingEntryForThisWeek();
+    if (!existing) {
+      el.classList.add('hidden');
+      el.classList.remove('locked');
+      return;
+    }
+    el.classList.remove('hidden');
+    const ico  = $('#sent-status-ico');
+    const text = $('#sent-status-text');
+    if (isEntryComplete(existing)) {
+      el.classList.add('locked');
+      if (ico)  ico.textContent  = '🔒';
+      if (text) text.textContent = 'נשלח במלואו · נשמר בהיסטוריה';
+    } else {
+      el.classList.remove('locked');
+      if (ico)  ico.textContent  = '✓';
+      if (text) text.textContent = 'הסיכום נשמר — שליחה חוזרת תעדכן אותו';
+    }
+  }
+
+  // ===== Date helpers =====
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function thisWeekMonday() {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const day = today.getDay();
+    // We want this week's Monday; if today is Sunday → use tomorrow's Monday (current week starts).
+    const diff = day === 0 ? 1 : 1 - day;
+    return addDays(today, diff);
+  }
+  function getThisWeekDates(days) {
+    const monday = thisWeekMonday();
+    const out = {};
+    days.forEach(d => { out[d] = addDays(monday, DAY_INDEX[d] - 1); });
+    return out;
+  }
+  function mondayOfWeek(date) {
+    const d = new Date(date); d.setHours(0,0,0,0);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+  function dateToInputValue(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function inputValueToDate(s) {
+    if (!s) return null;
+    const [y, m, day] = s.split('-').map(Number);
+    return new Date(y, m - 1, day);
+  }
+  function fmtDateShort(d) { return `${d.getDate()}.${d.getMonth() + 1}`; }
+  function fmtDateLong(d)  { return new Intl.DateTimeFormat('he-IL', { day:'numeric', month:'long' }).format(d); }
+  function fmtMonth(iso)   { return new Intl.DateTimeFormat('he-IL', { month:'long', year:'numeric' }).format(new Date(iso)); }
+  function fmtFullDate(iso){ return new Intl.DateTimeFormat('he-IL', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)); }
+  function fmtFullDateTime(iso){
+    const d = new Date(iso);
+    const date = new Intl.DateTimeFormat('he-IL', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(d);
+    const time = new Intl.DateTimeFormat('he-IL', { hour:'2-digit', minute:'2-digit' }).format(d);
+    return `${date} · ${time}`;
+  }
+  function fmtToday() {
+    return new Intl.DateTimeFormat('he-IL', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).format(new Date());
+  }
+  function monthKey(iso) {
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0');
+  }
+
+  // ===== Lock =====
+  // An entry is locked (cannot be deleted) if either:
+  //   (a) all 4 default slots are filled, OR
+  //   (b) the latest day in the entry's week has already passed.
+  function entryWeekPassed(entry) {
+    if (!entry.data || !entry.data.dates) return true;
+    const allTimes = Object.values(entry.data.dates).map(s => new Date(s).getTime());
+    if (!allTimes.length) return true;
+    const latest = new Date(Math.max(...allTimes));
+    latest.setHours(23, 59, 59, 999);
+    return new Date() > latest;
+  }
+  function isEntryLocked(entry) {
+    if (!entry.data || !entry.data.dates) return true;
+    if (isEntryComplete(entry)) return true;
+    return entryWeekPassed(entry);
+  }
+
+  // ===== Week info pill =====
+  function renderWeekInfo() {
+    const dates = getThisWeekDates(activeDaysFor(mainForm));
+    const parts = activeDaysFor(mainForm).map(d => `<span>${d} <strong>${fmtDateShort(dates[d])}</strong></span>`);
+    const inner = parts.join('<span class="sep">·</span>');
+    $('#week-info').innerHTML = `<span class="pill">🗓 ${inner}</span>`;
+  }
+
+  // ===== Form rendering =====
+  function renderForm(form) {
+    ensureSlotKeys(form);
+    renderFormPicker(form);
+    renderFormSchedule(form);
+    renderFormAbsent(form);
+    renderFormBanner(form);
+    renderFormPreview(form);
+  }
+
+  function renderFormPicker(form) {
+    const wrap = $(form.els.picker);
+    const fs = form.state;
+    wrap.innerHTML = '';
+    FAMILIES.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'parent-btn' + (fs.activeParent === f ? ' active' : '');
+      btn.dataset.family = f;
+      btn.innerHTML = `<span class="pre">הורי</span><span>${f}</span>`;
+      btn.addEventListener('click', () => {
+        fs.activeParent = (fs.activeParent === f) ? null : f;
+        renderFormPicker(form);
+        renderFormSchedule(form);
+        if (form === mainForm) saveWeekState();
+      });
+      wrap.appendChild(btn);
+    });
+    const hint = $(form.els.hint);
+    if (fs.activeParent) hint.innerHTML = `הורה פעיל: <strong>הורי ${fs.activeParent}</strong> · לחצו על משבצת לשיבוץ`;
+    else hint.innerHTML = 'בחרו את ההורה שמסמן עכשיו';
+  }
+
+  function renderFormBanner(form) {
+    const wrap = $(form.els.banner);
+    const days = form.state.extraDays;
+    if (!days.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = days.map(d => `
+      <div class="extra-day-banner">
+        <span class="info">⚡ נוסף: <em>יום ${d}</em></span>
+        <button class="remove" data-day="${d}">הסרה</button>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('.remove').forEach(btn => {
+      btn.addEventListener('click', () => removeExtraDay(form, btn.dataset.day));
+    });
+  }
+
+  function renderFormSchedule(form) {
+    const wrap = $(form.els.schedule);
+    const fs = form.state;
+    const days = activeDaysFor(form);
+    const dates = form.getDates();
+    let html = `
+      <div></div>
+      <div class="cell-head">⚽ לקחת</div>
+      <div class="cell-head">🏠 להחזיר</div>`;
+    days.forEach(d => {
+      const isExtra = !DEFAULT_DAYS.includes(d);
+      const dateStr = dates && dates[d] ? fmtDateShort(dates[d]) : '';
+      let dayLabel = `<div class="cell-day"><span class="cell-name">${d}</span>`;
+      if (dateStr) dayLabel += `<span class="cell-date">${dateStr}</span>`;
+      if (isExtra) dayLabel += `<span class="extra-mark">חריג</span>`;
+      dayLabel += `</div>`;
+      html += dayLabel;
+      ['לקחת', 'להחזיר'].forEach(action => {
+        html += `<button class="slot-cell" data-key="${d}|${action}"></button>`;
+      });
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.slot-cell').forEach(cell => {
+      const key = cell.dataset.key;
+      const [day] = key.split('|');
+      const owner = fs.slots[key];
+      const blocked = fs.activeParent && fs.absent[day] && fs.absent[day].has(fs.activeParent) && !owner;
+      if (blocked) {
+        cell.classList.add('blocked');
+        cell.innerHTML = `<span class="placeholder">לא מגיע ${day}</span>`;
+      } else if (!owner) {
+        cell.innerHTML = `<span class="placeholder">בחר</span>`;
+        if (!fs.activeParent) cell.classList.add('locked');
+      } else if (owner === fs.activeParent) {
+        cell.classList.add('filled');
+        cell.innerHTML = `<span class="owner">הורי ${owner}</span><span class="ico">✓</span>`;
+      } else {
+        cell.classList.add('filled-other');
+        cell.innerHTML = `<span class="owner">הורי ${owner}</span><span class="ico">✓</span>`;
+      }
+      cell.addEventListener('click', () => onSlotClick(form, key));
+    });
+  }
+
+  function onSlotClick(form, key) {
+    const fs = form.state;
+    const active = fs.activeParent;
+    const owner = fs.slots[key];
+    const [day] = key.split('|');
+    if (!active) { toast('בחרו הורה פעיל קודם'); return; }
+    if (!owner && fs.absent[day] && fs.absent[day].has(active)) {
+      toast(`הילד של הורי ${active} לא מגיע ביום ${day} — לא ניתן לשבץ`);
+      return;
+    }
+    if (!owner) {
+      fs.slots[key] = active;
+    } else if (owner === active) {
+      fs.slots[key] = null;
+    } else {
+      const ok = confirm(`המשבצת תפוסה ע״י הורי ${owner}.\nלהחליף ולשייך להורי ${active}?`);
+      if (!ok) return;
+      fs.slots[key] = active;
+    }
+    renderFormSchedule(form);
+    renderFormAbsent(form);
+    renderFormPreview(form);
+    if (form === mainForm) saveWeekState();
+    if (form === addForm) updateAddSaveBtn();
+  }
+
+  function familyHasSlotOnDay(form, family, day) {
+    return ['לקחת','להחזיר'].some(a => form.state.slots[`${day}|${a}`] === family);
+  }
+
+  function renderFormAbsent(form) {
+    const wrap = $(form.els.absent);
+    const fs = form.state;
+    wrap.innerHTML = '';
+    activeDaysFor(form).forEach(day => {
+      const row = document.createElement('div');
+      row.className = 'absent-row';
+      let chips = '';
+      FAMILIES.forEach(f => {
+        const sel = fs.absent[day] && fs.absent[day].has(f);
+        const hasSlot = familyHasSlotOnDay(form, f, day);
+        // Disable marking absent if this parent has already taken a slot that day.
+        const dis = !sel && hasSlot;
+        chips += `<button class="absent-chip${sel ? ' selected' : ''}" data-day="${day}" data-family="${f}"${dis ? ' disabled title="הורה זה כבר משובץ ביום זה"' : ''}>${f}</button>`;
+      });
+      row.innerHTML = `<div class="label">${day}</div><div class="absent-chips">${chips}</div>`;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('.absent-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        if (chip.disabled) return;
+        const day = chip.dataset.day;
+        const fam = chip.dataset.family;
+        if (!fs.absent[day]) fs.absent[day] = new Set();
+        if (fs.absent[day].has(fam)) fs.absent[day].delete(fam);
+        else fs.absent[day].add(fam);
+        renderFormAbsent(form);
+        renderFormSchedule(form);
+        renderFormPreview(form);
+        if (form === mainForm) saveWeekState();
+        if (form === addForm) updateAddSaveBtn();
+      });
+    });
+  }
+
+  function buildSummaryMessage(form) {
+    const dates = form.getDates();
+    const fs = form.state;
+    const lines = ['📋 הסעות חוג כדורגל · סיכום שבועי', ''];
+    const days = activeDaysFor(form);
+    days.forEach((d, i) => {
+      const isExtra = !DEFAULT_DAYS.includes(d);
+      const dateStr = dates ? ' · ' + fmtDateLong(dates[d]) : '';
+      const tag = isExtra ? ' ⚡' : '';
+      lines.push(`🟢 יום ${d}${dateStr}${tag}`);
+      const t = fs.slots[`${d}|לקחת`];
+      const r = fs.slots[`${d}|להחזיר`];
+      lines.push(`⚽ לקחת: ${t ? 'הורי ' + t : 'לא משובץ ⚠️'}`);
+      lines.push(`🏠 להחזיר: ${r ? 'הורי ' + r : 'לא משובץ ⚠️'}`);
+      const absent = fs.absent[d] ? Array.from(fs.absent[d]) : [];
+      if (absent.length) lines.push(`❌ לא מגיעים: ${absent.join(', ')}`);
+      if (i < days.length - 1) lines.push('');
+    });
+    return lines.join('\n');
+  }
+  function renderFormPreview(form) {
+    $(form.els.preview).textContent = buildSummaryMessage(form);
+    if (form === mainForm) renderSentStatus();
+  }
+  function formToData(form) {
+    const fs = form.state;
+    const dates = form.getDates();
+    const absentOut = {};
+    Object.keys(fs.absent).forEach(d => { absentOut[d] = Array.from(fs.absent[d]); });
+    const datesOut = {};
+    if (dates) Object.keys(dates).forEach(d => { datesOut[d] = dates[d].toISOString(); });
+    return {
+      slots: { ...fs.slots },
+      absent: absentOut,
+      dates: dates ? datesOut : null,
+      extraDays: [...fs.extraDays],
+    };
+  }
+  function clearForm(form) {
+    form.state = newFormState();
+    ensureSlotKeys(form);
+  }
+
+  // ===== Extra day handling =====
+  function openDayPicker(form) {
+    const grid = $('#day-grid');
+    grid.innerHTML = '';
+    const available = ALL_DAYS.filter(d => !activeDaysFor(form).includes(d));
+    if (!available.length) {
+      toast('כל הימים כבר נוספו');
+      return;
+    }
+    available.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'day-opt';
+      btn.textContent = `יום ${d}`;
+      btn.addEventListener('click', () => {
+        addExtraDay(form, d);
+        $('#modal-day').classList.remove('show');
+      });
+      grid.appendChild(btn);
+    });
+    $('#modal-day').classList.add('show');
+  }
+  function addExtraDay(form, day) {
+    if (form.state.extraDays.includes(day)) return;
+    form.state.extraDays.push(day);
+    form.state.extraDays.sort((a,b) => DAY_INDEX[a] - DAY_INDEX[b]);
+    ensureSlotKeys(form);
+    if (form === mainForm) renderWeekInfo();
+    renderForm(form);
+    if (form === mainForm) saveWeekState();
+    if (form === addForm) updateAddSaveBtn();
+    toast(`נוסף יום ${day}`);
+  }
+  function removeExtraDay(form, day) {
+    form.state.extraDays = form.state.extraDays.filter(d => d !== day);
+    ['לקחת','להחזיר'].forEach(a => delete form.state.slots[`${day}|${a}`]);
+    delete form.state.absent[day];
+    if (form === mainForm) renderWeekInfo();
+    renderForm(form);
+    if (form === mainForm) saveWeekState();
+    if (form === addForm) updateAddSaveBtn();
+  }
+
+  // ===== Main actions =====
+  // Rules for sending to history:
+  //   - No existing entry for this week → ADD.
+  //   - Existing entry, but NOT yet complete (4/4) → REPLACE (delete old, save new).
+  //   - Existing entry that IS complete → DON'T touch history (it's final); still share to WA.
+  function commitToHistory(msg) {
+    const existing = existingEntryForThisWeek();
+    const newData = formToData(mainForm);
+    const willBeComplete = isFormComplete(mainForm);
+
+    if (existing && isEntryComplete(existing)) {
+      // Locked — don't change history
+      toast('הסיכום השבועי סופי — נשמר לאורך זמן');
+      return;
+    }
+    if (existing) {
+      // Replace the partial existing entry
+      state.history = state.history.filter(e => e.id !== existing.id);
+      addToHistory({ type:'summary', data:newData, message:msg });
+      toast(willBeComplete ? 'הסיכום הושלם ונעול בהיסטוריה' : 'הסיכום עודכן בהיסטוריה');
+    } else {
+      // Fresh entry
+      addToHistory({ type:'summary', data:newData, message:msg });
+      toast(willBeComplete ? 'נשמר בהיסטוריה — סופי ונעול' : 'נשמר בהיסטוריה — ניתן לעדכן בשליחה חוזרת');
+    }
+    renderSentStatus();
+  }
+  function shareMain() {
+    const msg = buildSummaryMessage(mainForm);
+    commitToHistory(msg);
+    shareWA(msg);
+  }
+  function copyMain() {
+    const msg = buildSummaryMessage(mainForm);
+    commitToHistory(msg);
+    copyText(msg, $('#btn-summary-copy'), 'העתקת הסיכום');
+  }
+  function resetMain() {
+    if (!confirm('לנקות את כל הסימונים בסיכום? פעולה זו לא ניתנת לשחזור.')) return;
+    clearForm(mainForm);
+    clearWeekState();
+    renderWeekInfo();
+    renderForm(mainForm);
+    toast('נוקה');
+  }
+
+  // ===== Add screen =====
+  function renderAddDateInfo() {
+    const info = $('#add-date-info');
+    if (!addForm.mondayDate) {
+      info.classList.add('empty');
+      info.textContent = 'בחרו תאריך כדי להמשיך';
+      return;
+    }
+    info.classList.remove('empty');
+    const dates = addForm.getDates();
+    const parts = activeDaysFor(addForm).map(d => `${d} <strong>${fmtDateLong(dates[d])}</strong>`);
+    let html = `🗓 ${parts.join(' · ')}`;
+
+    const existing = existingEntryForDate(addForm.mondayDate);
+    const daysOld = daysSinceMonday(addForm.mondayDate);
+    if (existing) {
+      if (entryEditableViaManual(existing)) {
+        html += `<span class="edit-mode">✏️ קיימת רשומה לשבוע זה — תוחלף בשמירה</span>`;
+      } else {
+        html += `<span class="too-old">🔒 רשומה זו ישנה מ-${MAX_EDIT_DAYS} יום — לא ניתן לערוך</span>`;
+      }
+    } else if (daysOld !== null && daysOld > MAX_EDIT_DAYS) {
+      html += `<span class="too-old">🔒 שבוע זה ישן מ-${MAX_EDIT_DAYS} יום — לא ניתן להוסיף רשומה</span>`;
+    }
+    info.innerHTML = html;
+  }
+  function updateAddSaveBtn() {
+    const btn = $('#btn-add-save');
+    const fs = addForm.state;
+    const hasDate = !!addForm.mondayDate;
+    const hasSlot = Object.values(fs.slots).some(v => v);
+    const hasAbs = Object.values(fs.absent).some(s => s.size > 0);
+
+    const daysOld = daysSinceMonday(addForm.mondayDate);
+    const tooOld = daysOld !== null && daysOld > MAX_EDIT_DAYS;
+
+    btn.disabled = !(hasDate && (hasSlot || hasAbs)) || tooOld;
+
+    const isEditing = !!addForm.editingEntryId;
+    const label = isEditing ? 'עדכון רשומה קיימת' : 'שמרו רשומה היסטורית';
+    const icon  = isEditing ? '✏️' : '💾';
+    btn.innerHTML = `<span>${icon}</span><span>${label}</span>`;
+  }
+  function onAddDateChange(ev) {
+    const v = ev.target.value;
+    if (!v) {
+      addForm.mondayDate = null;
+      addForm.editingEntryId = null;
+      clearForm(addForm);
+    } else {
+      const picked = inputValueToDate(v);
+      const monday = mondayOfWeek(picked);
+      addForm.mondayDate = monday;
+      ev.target.value = dateToInputValue(monday);
+      const existing = existingEntryForDate(monday);
+      if (existing && entryEditableViaManual(existing)) {
+        loadEntryIntoAddForm(existing);
+        addForm.editingEntryId = existing.id;
+      } else {
+        clearForm(addForm);
+        addForm.editingEntryId = null;
+      }
+    }
+    renderAddDateInfo();
+    renderForm(addForm);
+    updateAddSaveBtn();
+  }
+  function openAddScreen() {
+    // require PIN to enter manual entry mode if any manual entries already exist
+    const hasAnyManual = state.history.some(e => e.manualEntry);
+    if (hasAnyManual) {
+      askPIN({
+        title: 'הזנה ידנית מוגנת',
+        desc: 'לאחר הזנה היסטורית, נדרש קוד אישור לכל הזנה נוספת',
+        onOk: () => proceedToAdd(),
+      });
+    } else {
+      proceedToAdd();
+    }
+  }
+  function proceedToAdd() {
+    clearForm(addForm);
+    addForm.mondayDate = null;
+    addForm.editingEntryId = null;
+    $('#add-date').value = '';
+    showScreen('add');
+  }
+  function saveManualEntry() {
+    if (!addForm.mondayDate) { toast('בחרו תאריך'); return; }
+    const daysOld = daysSinceMonday(addForm.mondayDate);
+    if (daysOld !== null && daysOld > MAX_EDIT_DAYS) {
+      toast(`לא ניתן לשמור — השבוע ישן מ-${MAX_EDIT_DAYS} יום`);
+      return;
+    }
+
+    const isEditing = !!addForm.editingEntryId;
+    const confirmMsg = isEditing
+      ? 'לעדכן את הרשומה הקיימת? הגרסה הקודמת תוחלף ותינעל מחדש.'
+      : 'לאחר שמירה לא ניתן לערוך את הרשומה (אלא דרך "הוספה ידנית" עד שבועיים מתאריך הרשומה). להמשיך?';
+    if (!confirm(confirmMsg)) return;
+
+    const data = formToData(addForm);
+    const msg = buildSummaryMessage(addForm);
+    const ts = new Date(addForm.mondayDate);
+    ts.setHours(12, 0, 0, 0);
+
+    if (isEditing) {
+      state.history = state.history.filter(e => e.id !== addForm.editingEntryId);
+    }
+    addToHistory({
+      type: 'summary', manualEntry: true, data, message: msg, timestamp: ts.toISOString(),
+    });
+    toast(isEditing ? 'הרשומה עודכנה בהיסטוריה' : 'הרשומה נשמרה בהיסטוריה');
+    showScreen('history');
+  }
+
+  // ===== PIN modal =====
+  let pinPending = null;
+  function askPIN({ title, desc, onOk }) {
+    pinPending = onOk;
+    $('#pin-title').textContent = title || 'נדרש קוד אישור';
+    $('#pin-desc').textContent  = desc  || 'הקישו את קוד הניהול לאישור הפעולה';
+    const inp = $('#pin-input');
+    inp.value = '';
+    inp.classList.remove('error');
+    $('#pin-error').textContent = '';
+    $('#modal-pin').classList.add('show');
+    setTimeout(() => inp.focus(), 80);
+  }
+  function tryPIN() {
+    const inp = $('#pin-input');
+    if (inp.value === ADMIN_PIN) {
+      $('#modal-pin').classList.remove('show');
+      const cb = pinPending;
+      pinPending = null;
+      if (cb) cb();
+    } else {
+      inp.classList.add('error');
+      $('#pin-error').textContent = 'קוד שגוי';
+      inp.value = '';
+      setTimeout(() => inp.focus(), 50);
+    }
+  }
+  function closePIN() {
+    $('#modal-pin').classList.remove('show');
+    pinPending = null;
+  }
+
+  // ===== Sharing helpers =====
+  function shareWA(msg) {
+    if (!msg) return;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+  async function copyText(msg, btn, originalLabel) {
+    if (!msg) return;
+    try { await navigator.clipboard.writeText(msg); }
+    catch(e) {
+      const ta = document.createElement('textarea');
+      ta.value = msg; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(err) {}
+      document.body.removeChild(ta);
+    }
+    btn.textContent = '✓ הועתק'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = originalLabel; btn.classList.remove('copied'); }, 1800);
+  }
+
+  // ===== Ranking =====
+  function calcRankings() {
+    const drives = {}, absences = {};
+    FAMILIES.forEach(f => { drives[f] = 0; absences[f] = 0; });
+    state.history.forEach(entry => {
+      if (entry.type !== 'summary' || !entry.data) return;
+      const slots = entry.data.slots || {};
+      Object.values(slots).forEach(f => { if (f && drives[f] !== undefined) drives[f]++; });
+      const abs = entry.data.absent || {};
+      Object.values(abs).forEach(arr => {
+        (arr || []).forEach(f => { if (absences[f] !== undefined) absences[f]++; });
+      });
+    });
+    return { drives, absences };
+  }
+  function renderRanking() {
+    const block = $('#ranking-block');
+    if (!state.history.length) { block.innerHTML = ''; return; }
+    const { drives, absences } = calcRankings();
+    const totalDrives = Object.values(drives).reduce((a,b) => a+b, 0);
+    if (totalDrives === 0 && Object.values(absences).every(v => v === 0)) {
+      block.innerHTML = ''; return;
+    }
+    const sorted = FAMILIES.slice().sort((a,b) => drives[b] - drives[a]);
+    const maxV = drives[sorted[0]];
+    let driveHtml = '';
+    if (totalDrives > 0) {
+      sorted.forEach((f, idx) => {
+        const isLast = idx === sorted.length - 1 && drives[f] < maxV;
+        const cls = isLast ? 'rank-last' : '';
+        driveHtml += `
+          <div class="ranking-row ${cls}">
+            <div class="rank-num">${idx + 1}</div>
+            <div class="rank-name">הורי ${f}</div>
+            <div class="rank-count">${drives[f]}</div>
+          </div>`;
+      });
+    } else {
+      driveHtml = `<div class="ranking-empty">עדיין אין סימוני נסיעות</div>`;
+    }
+    let absHtml = '';
+    const sortedAbs = FAMILIES.slice().sort((a,b) => absences[b] - absences[a]);
+    sortedAbs.forEach(f => {
+      absHtml += `
+        <div class="ranking-row">
+          <div class="rank-num">·</div>
+          <div class="rank-name">הורי ${f}</div>
+          <div class="rank-count">${absences[f]}</div>
+        </div>`;
+    });
+    block.innerHTML = `
+      <div class="ranking">
+        <div class="ranking-title">🚗 כמות נסיעות</div>
+        <div class="ranking-sub">סך נסיעות לאורך כל ההיסטוריה</div>
+        <div class="ranking-list">${driveHtml}</div>
+        <div class="ranking-divider">— ביטולי הגעה לחוג —</div>
+        <div class="ranking-list">${absHtml}</div>
+      </div>`;
+  }
+
+  // ===== History list =====
+  function historyTitle(entry) {
+    return entry.manualEntry ? '📋 סיכום שבועי <span class="h-tag">ידני</span>' : '📋 סיכום שבועי';
+  }
+  function historyMeta(entry) {
+    if (entry.data && entry.data.dates) {
+      const days = Object.keys(entry.data.dates);
+      const parts = days.map(d => `${d} ${fmtDateShort(new Date(entry.data.dates[d]))}`);
+      const prefix = entry.manualEntry ? 'נכלל בארכיון' : 'נשלח';
+      return `${parts.join(' · ')} · ${prefix} ${fmtFullDate(entry.timestamp)}`;
+    }
+    return `נשלח ${fmtFullDateTime(entry.timestamp)}`;
+  }
+  function renderHistory() {
+    const list = $('#history-list');
+    const countEl = $('#history-count');
+    const clearRow = $('#clear-row');
+    const exportBtn = $('#btn-export');
+    list.innerHTML = '';
+
+    if (!state.history.length) {
+      countEl.textContent = '';
+      list.innerHTML = `<div class="history-empty">
+        <div class="ico">🗂️</div>
+        <div class="msg">אין עדיין רשומות שמורות.<br>אפשר להזין רשומות קודמות בלחיצה על "הוספה ידנית".</div>
+      </div>`;
+      clearRow.style.display = 'none';
+      exportBtn.disabled = true;
+      renderRanking();
+      return;
+    }
+    countEl.textContent = `${state.history.length} ${state.history.length === 1 ? 'רשומה שמורה' : 'רשומות שמורות'}`;
+    clearRow.style.display = '';
+    exportBtn.disabled = false;
+
+    const groups = {};
+    const order = [];
+    state.history.forEach(e => {
+      const k = monthKey(e.timestamp);
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(e);
+    });
+    order.forEach(k => {
+      const div = document.createElement('div');
+      div.className = 'month-divider';
+      div.textContent = fmtMonth(groups[k][0].timestamp);
+      list.appendChild(div);
+      groups[k].forEach(entry => {
+        const locked = isEntryLocked(entry);
+        const item = document.createElement('div');
+        item.className = 'history-item' + (entry.manualEntry ? ' manual' : '');
+        const lockIcon = locked ? '<span class="h-lock" title="נעול">🔒</span>' : '';
+        // Manual entries always require PIN to delete; locked auto-entries cannot be deleted at all.
+        let deleteAction;
+        if (entry.manualEntry) {
+          deleteAction = '<button class="h-action danger" data-act="delete">🗑 מחיקה</button>';
+        } else if (locked) {
+          const reason = entryWeekPassed(entry) ? 'שבוע שעבר' : 'מולא במלואו';
+          deleteAction = `<span class="h-locked-note">🔒 רשומה נעולה — ${reason}</span>`;
+        } else {
+          deleteAction = '<button class="h-action danger" data-act="delete">🗑 מחיקה</button>';
+        }
+        item.innerHTML = `
+          <button class="history-head">
+            <div class="h-icon">📋</div>
+            <div class="h-body">
+              <div class="h-title">${historyTitle(entry)}${lockIcon}</div>
+              <div class="h-meta">${escapeHtml(historyMeta(entry))}</div>
+            </div>
+            <div class="h-arrow">▾</div>
+          </button>
+          <div class="history-body">
+            <div class="h-text"></div>
+            <div class="h-actions">
+              <button class="h-action" data-act="resend">📤 שליחה חוזרת</button>
+              <button class="h-action" data-act="copy">📋 העתקה</button>
+              ${deleteAction}
+            </div>
+          </div>`;
+        item.querySelector('.h-text').textContent = entry.message;
+        item.querySelector('.history-head').addEventListener('click', () => item.classList.toggle('open'));
+        item.querySelector('[data-act="resend"]').addEventListener('click', () => shareWA(entry.message));
+        item.querySelector('[data-act="copy"]').addEventListener('click', async (ev) => {
+          await copyText(entry.message, ev.currentTarget, '📋 העתקה');
+        });
+        const delBtn = item.querySelector('[data-act="delete"]');
+        if (delBtn) {
+          delBtn.addEventListener('click', () => {
+            if (entry.manualEntry) {
+              askPIN({
+                title: 'מחיקת רשומה ידנית',
+                desc: 'נדרש קוד אישור למחיקת רשומות שהוזנו ידנית',
+                onOk: () => {
+                  if (confirm('למחוק את הרשומה הזו?')) deleteHistoryEntry(entry.id);
+                },
+              });
+            } else {
+              if (confirm('למחוק את הרשומה הזו?')) deleteHistoryEntry(entry.id);
+            }
+          });
+        }
+        list.appendChild(item);
+      });
+    });
+
+    renderRanking();
+  }
+
+  // ===== PDF =====
+  function buildPrintHTML() {
+    if (!state.history.length) return '';
+    const { drives, absences } = calcRankings();
+    const sorted = FAMILIES.slice().sort((a,b) => drives[b] - drives[a]);
+    let rankRows = '';
+    sorted.forEach((f, idx) => {
+      rankRows += `<div class="pdf-rank-row"><span><span class="num">${idx+1}.</span> הורי ${escapeHtml(f)}</span><span>${drives[f]} נסיעות · ${absences[f]} ביטולים</span></div>`;
+    });
+    const groups = {}; const order = [];
+    state.history.forEach(e => {
+      const k = monthKey(e.timestamp);
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(e);
+    });
+    let html = `
+      <div class="pdf-header">
+        <div class="pdf-title">היסטוריית <em>הסעות חוג כדורגל</em></div>
+        <div class="pdf-sub">נוצר ב־${fmtToday()} · ${state.history.length} רשומות</div>
+      </div>`;
+    order.forEach(k => {
+      html += `<div class="pdf-month">${escapeHtml(fmtMonth(groups[k][0].timestamp))}</div>`;
+      groups[k].forEach(entry => {
+        const tag = entry.manualEntry ? ' (ידני)' : '';
+        html += `
+          <div class="pdf-entry">
+            <div class="pdf-entry-head">
+              <div class="pdf-entry-title">📋 סיכום שבועי${tag}</div>
+              <div class="pdf-entry-date">${escapeHtml(fmtFullDate(entry.timestamp))}</div>
+            </div>
+            <div class="pdf-entry-msg">${escapeHtml(entry.message)}</div>
+          </div>`;
+      });
+    });
+    html += `
+      <div class="pdf-rank-block" style="margin-top:10mm;">
+        <div class="pdf-rank-title">🚗 כמות נסיעות וביטולים</div>
+        ${rankRows}
+      </div>
+      <div class="pdf-footer">הסעות חוג כדורגל · ${FAMILIES.map(f => 'הורי ' + f).join(' · ')}</div>`;
+    return html;
+  }
+  function exportPDF() {
+    if (!state.history.length) return;
+    const printArea = $('#print-area');
+    printArea.innerHTML = buildPrintHTML();
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => { printArea.innerHTML = ''; }, 1000);
+    }, 100);
+  }
+
+  // ===== Wire up =====
+  $('#btn-summary-share').addEventListener('click', shareMain);
+  $('#btn-summary-copy').addEventListener('click', copyMain);
+  $('#reset-btn').addEventListener('click', resetMain);
+  $('#btn-export').addEventListener('click', exportPDF);
+  $('#btn-add-history').addEventListener('click', openAddScreen);
+  $('#btn-add-save').addEventListener('click', saveManualEntry);
+  $('#add-date').addEventListener('change', onAddDateChange);
+  $('#btn-add-extra-day').addEventListener('click', () => openDayPicker(mainForm));
+  $('#btn-add-extra-day-2').addEventListener('click', () => openDayPicker(addForm));
+
+  // Modals
+  $('#modal-day-cancel').addEventListener('click', () => $('#modal-day').classList.remove('show'));
+  $('#modal-day').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-day') $('#modal-day').classList.remove('show');
+  });
+  $('#pin-cancel').addEventListener('click', closePIN);
+  $('#pin-ok').addEventListener('click', tryPIN);
+  $('#pin-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); tryPIN(); }
+  });
+  $('#pin-input').addEventListener('input', (e) => {
+    e.target.classList.remove('error');
+    $('#pin-error').textContent = '';
+    if (e.target.value.length === 4) {
+      // try after a small delay to let keyboard finish
+      setTimeout(tryPIN, 100);
+    }
+  });
+  $('#modal-pin').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-pin') closePIN();
+  });
+
+  $$('[data-go]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dest = btn.dataset.go;
+      if (dest === 'history') showScreen('history');
+      else if (dest === 'back-to-main') showScreen('main');
+      else if (dest === 'back-from-add') showScreen('history');
+    });
+  });
+  $('#clear-btn').addEventListener('click', () => {
+    const hasManual = state.history.some(e => e.manualEntry);
+    const proceed = () => {
+      if (confirm('למחוק את כל ההיסטוריה? פעולה זו לא ניתנת לשחזור.')) {
+        state.history = [];
+        saveHistory();
+        renderHistory();
+      }
+    };
+    if (hasManual) {
+      askPIN({
+        title: 'ניקוי היסטוריה מוגן',
+        desc: 'ההיסטוריה כוללת רשומות ידניות — נדרש קוד אישור',
+        onOk: proceed,
+      });
+    } else {
+      proceed();
+    }
+  });
+
+  // ===== Onboarding event listeners =====
+  $('#btn-create-group').addEventListener('click', async () => {
+    const btn = $('#btn-create-group');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span><span>יוצר קבוצה...</span>';
+    try {
+      const newId = await createGroup();
+      storeGroupId(newId);
+      loadHistory();
+      loadWeekState();
+      startGroupListener();
+      showScreen('main');
+    } catch (e) {
+      toast('שגיאה ביצירת קבוצה — בדקו חיבור לאינטרנט');
+      btn.disabled = false;
+      btn.innerHTML = '<span>⚽</span><span>צור קבוצה חדשה</span>';
+    }
+  });
+
+  $('#join-code-input').addEventListener('input', (e) => {
+    const v = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    e.target.value = v;
+    $('#btn-join-group').disabled = v.length !== 6;
+  });
+
+  $('#btn-join-group').addEventListener('click', async () => {
+    const inputEl = $('#join-code-input');
+    const code = inputEl.value.toUpperCase();
+    if (code.length !== 6) return;
+    const btn = $('#btn-join-group');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span><span>מחפש קבוצה...</span>';
+    const exists = await checkGroupExists(code);
+    if (!exists) {
+      toast('קוד קבוצה לא נמצא — בדקו שהקוד נכון');
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔗</span><span>הצטרף לקבוצה</span>';
+      inputEl.classList.add('error');
+      setTimeout(() => inputEl.classList.remove('error'), 1500);
+      return;
+    }
+    storeGroupId(code);
+    loadHistory();
+    loadWeekState();
+    startGroupListener();
+    showScreen('main');
+  });
+
+  $('#btn-confirm-join').addEventListener('click', async () => {
+    const pendingId = $('#join-confirm-id').textContent.trim();
+    if (!pendingId || pendingId === '------') return;
+    const btn = $('#btn-confirm-join');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span><span>מצטרף...</span>';
+    const exists = await checkGroupExists(pendingId);
+    if (!exists) {
+      toast('קוד קבוצה לא נמצא — ייתכן שהקישור פג תוקף');
+      showScreen('onboard');
+      return;
+    }
+    storeGroupId(pendingId);
+    loadHistory();
+    loadWeekState();
+    startGroupListener();
+    showScreen('main');
+  });
+
+  $('#btn-cancel-join').addEventListener('click', () => showScreen('onboard'));
+
+  // ===== Invite modal =====
+  $('#btn-invite').addEventListener('click', () => {
+    if (!groupId) { toast('לא מחובר לקבוצה'); return; }
+    setGroupInUI(groupId);
+    $('#modal-invite').classList.add('show');
+  });
+
+  $('#modal-invite-close').addEventListener('click', () => $('#modal-invite').classList.remove('show'));
+  $('#modal-invite').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-invite') $('#modal-invite').classList.remove('show');
+  });
+
+  $('#modal-invite-wa').addEventListener('click', () => {
+    const url = getInviteUrl();
+    const msg = `הוזמנת להצטרף לאפליקציית קארפול כדורגל! 🚗⚽\n\nלחצו על הקישור לצפייה והצטרפות:\n${url}`;
+    shareWA(msg);
+    $('#modal-invite').classList.remove('show');
+  });
+
+  $('#modal-invite-copy').addEventListener('click', async () => {
+    const url = getInviteUrl();
+    await copyText(url, $('#modal-invite-copy'), '🔗 העתק קישור הצטרפות');
+    setTimeout(() => $('#modal-invite').classList.remove('show'), 1400);
+  });
+
+  $('#btn-leave-group').addEventListener('click', () => {
+    if (!confirm('לעזוב את הקבוצה? הנתונים המקומיים ישמרו אך לא יסונכרנו יותר.')) return;
+    if (unsubscribeListener) { unsubscribeListener(); unsubscribeListener = null; }
+    groupId = null;
+    localStorage.removeItem(STORAGE_GROUP_ID);
+    setSyncStatus('offline');
+    showScreen('onboard');
+  });
+
+  // ===== Init =====
+  async function initApp() {
+    initFirebase();
+
+    // Check URL for ?group= invite param
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlGroupId = urlParams.get('group');
+    const storedGroupId = localStorage.getItem(STORAGE_GROUP_ID);
+
+    if (urlGroupId) {
+      const cleanId = urlGroupId.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (cleanId !== storedGroupId) {
+        // Show join confirmation
+        $('#join-confirm-id').textContent = cleanId;
+        showScreen('join');
+        return;
+      }
+    }
+
+    if (storedGroupId) {
+      storeGroupId(storedGroupId);
+      loadHistory();
+      loadWeekState();
+      startGroupListener();
+      showScreen('main');
+      return;
+    }
+
+    // No group — show onboarding
+    showScreen('onboard');
+  }
+
+  initApp();
+})();
+
+// ===== PWA: register service worker =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('Service Worker registration failed:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
